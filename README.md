@@ -5,6 +5,7 @@ Repo for miscellaneous scripts that may, or may not work for you. :smirk:
 | Script Name         | Use Function                                     |
 | ------------------- | :----------------------------------------------- |
 | `ff_hist_viewer.py` | firefox history viewer                           |
+| `file_offsets.py`   | determine file types in a directory              |
 | `ioc_extractor.py`  | extract IOCs from csv, txt, and xml files        |
 | `mac_cleaner`       | cleanup script I use on my own Mac               |
 | `pass_gen.py`       | password generator                               |
