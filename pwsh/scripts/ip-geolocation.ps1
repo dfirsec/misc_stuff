@@ -107,3 +107,7 @@ function Get-GeolocationMap {
     # Write HTML to output file
     $html | Out-File $OutputFile -Encoding UTF8
 }
+
+$ips = Read-Host "Enter IP addresses separated by commas"
+$ipAddresses = $ips.Split(",")
+Get-GeolocationMap -ApiKey $apiKey -OutputFile "map.html" -IpAddresses $ipAddresses
