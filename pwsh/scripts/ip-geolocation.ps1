@@ -1,5 +1,24 @@
-# Set the API key for IPInfo.io
-$apiKey = ""
+param (
+    [Parameter(Mandatory = $true)]
+    [string]$OutputFile,
+
+    [Parameter(Mandatory = $true)]
+    [string[]]$IpAddresses
+)
+
+# ApiKey for Ipinfo.io
+$ApiKey = ""
+
+if (-not $ApiKey) {
+    Write-Host "Error: API key is not defined."
+    Exit
+}
+
+if ($ApiKey.Trim().Length -eq 0) {
+    Write-Host "Error: API key is empty."
+    Exit
+}
+
 
 function Resolve-Dns {
     param (
@@ -7,7 +26,6 @@ function Resolve-Dns {
         [string[]]$DnsServers
     )
 
-    $dnsServers = @("1.1.1.1", "9.9.9.9", "8.8.8.8")
     foreach ($dnsServer in $DnsServers) {
         $result = Resolve-DnsName -Name $IpAddress -Server $dnsServer -ErrorAction SilentlyContinue
         if ($result) {
@@ -18,11 +36,34 @@ function Resolve-Dns {
 
 function Get-GeolocationMap {
     param (
+        [Parameter(Mandatory = $true)]
         [string]$OutputFile,
-        [string]$ApiKey,
+
+        [Parameter(Mandatory = $true)]
         [string[]]$IpAddresses,
-        [string[]]$DnsServers
+
+        [string[]]$DnsServers = @("1.1.1.1", "9.9.9.9", "8.8.8.8")
     )
+
+    if (-not $OutputFile) {
+        Write-Host "Error: Output file is not defined."
+        Exit
+    }
+
+    if ($OutputFile.Trim().Length -eq 0) {
+        Write-Host "Error: Output file is empty."
+        Exit
+    }
+
+    if (-not $IpAddresses) {
+        Write-Host "Error: IP addresses are not defined."
+        Exit
+    }
+
+    if ($IpAddresses.Count -eq 0) {
+        Write-Host "Error: IP addresses array is empty."
+        Exit
+    }
 
     # Create a hash table to store resolved hostnames
     $resolvedHostnames = @{}
@@ -75,7 +116,7 @@ function Get-GeolocationMap {
 
         try {
             # Get the geolocation information for the IP address
-            $geolocationUri = "https://ipinfo.io/$($ipAddress)?token=$($apiKey)"
+            $geolocationUri = "https://ipinfo.io/$($ipAddress)?token=$($ApiKey)"
             $geolocation = Invoke-RestMethod -Uri $geolocationUri -ErrorAction Stop
         }
         catch {
@@ -84,7 +125,7 @@ function Get-GeolocationMap {
         }
 
         if ($hostname) {
-            $popupText = "IP: $($ipAddress) <br>City: $($geolocation.city) <br>Country: $($geolocation.country) $($hostname)"
+            $popupText = "IP: $($ipAddress) <br>City: $($geolocation.city) <br>Country: $($geolocation.country) <br>$($hostname)"
         }
         else {
             $popupText = "IP: $($ipAddress) <br>City: $($geolocation.city) <br>Country: $($geolocation.country)"
@@ -105,9 +146,8 @@ function Get-GeolocationMap {
 "@
 
     # Write HTML to output file
-    $html | Out-File $OutputFile -Encoding UTF8
+    $html | Out-File -FilePath $OutputFile -Encoding UTF8
 }
 
-$ips = Read-Host "Enter IP addresses separated by commas"
-$ipAddresses = $ips.Split(",")
-Get-GeolocationMap -ApiKey $apiKey -OutputFile "map.html" -IpAddresses $ipAddresses
+# Call the Get-GeolocationMap function with the required parameters
+Get-GeolocationMap -OutputFile $OutputFile -IpAddresses $IpAddresses
