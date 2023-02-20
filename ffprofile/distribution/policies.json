@@ -1,0 +1,17 @@
+{
+  "policies": {
+    "DisableFormHistory": true,
+    "DisableFirefoxAccounts": true,
+    "DisableAppUpdate": false,
+    "NetworkPrediction": false,
+    "CaptivePortal": false,
+    "DNSOverHTTPS": {
+      "Enabled": false
+    },
+    "DisableFirefoxStudies": true,
+    "DisableTelemetry": true,
+    "DisablePocket": true,
+    "DisableBuiltinPDFViewer": true,
+    "BackgroundAppUpdate": false
+  }
+}
