@@ -39,6 +39,6 @@ SCREENSHOT.show()
 ## JS/Misc
 | Script Name         | Use Function                                     |
 | ------------------- | :----------------------------------------------- |
-| `prefs.js`          | firefox preferences                              |
+| `ffprofile`         | firefox profile/preferences                      |
 
 
