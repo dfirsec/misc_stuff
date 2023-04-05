@@ -62,7 +62,7 @@ remove_old_logs() {
 
 empty_trash() {
     step "Emptying trash"
-    sudo find /home/ /root/ -depth -type d \( -path '/home/sift/shared-drives' -o -path '/home/sift/SharedDrives' -o -path '/home/sift/lost+found' \) -prune -o \( -path '/proc' -o -path '/dev' -o -path '/sys' \) -prune -o -type d -name '.*' -prune -o -type d -not -readable -prune -o -type d -path '*/.local/share/Trash/*' -print -delete -print 2>/dev/null
+    sudo find /home/ /root/ -depth -type d -prune -o \( -path '/proc' -o -path '/dev' -o -path '/sys' \) -prune -o -type d -name '.*' -prune -o -type d -not -readable -prune -o -type d -path '*/.local/share/Trash/*' -print -delete -print 2>/dev/null
     sudo find /root/.local/share/Trash -mindepth 1 -delete -print 2>/dev/null
     sudo rm -rf /tmp/*
 }
