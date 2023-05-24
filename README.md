@@ -8,6 +8,7 @@ Repo for miscellaneous scripts that may, or may not work for you. :smirk:
 | `ff_hist_viewer.py` | firefox history viewer                           |
 | `file_offsets.py`   | determine file types                             |
 | `file_size.py`      | determine file sizes                             |
+| `find_api_key.py`   | find api_key references in files                 |
 | `ioc_extractor.py`  | extract IOCs from csv, txt, and xml files        |
 | `pass_gen.py`       | password generator                               |
 | `pdf2img.py`        | convert pdf file to image files                  |
