@@ -1,3 +1,5 @@
+"""Find 'api_key' references in files."""
+
 import contextlib
 import multiprocessing
 import re
@@ -12,21 +14,14 @@ def check_file(file_path: Path, api_key_regexes: dict) -> tuple[Path, list[int],
     if file_ext in api_key_regexes:
         line_numbers = []
         api_keys = []
-        excluded_keys = [
-            "yourshodanapikey",
-            "yourshodankey",
-            "yourapikey",
-            "api_key",
-            "apikey",
-            "api-key",
-        ]
         with contextlib.suppress(OSError):
             with file_path.open(encoding="utf-8", errors="ignore") as file:
                 for line_no, line in enumerate(file, start=1):
                     match = api_key_regexes[file_ext].search(line)
                     if match:
-                        matched_key = match.group(1).lower()
-                        if matched_key not in excluded_keys:
+                        # Only extract alphanumeric characters and underscore from the matched key
+                        matched_key = re.sub(r"\W", "", match.group(1).lower())
+                        if "key" not in matched_key and "api" not in matched_key:
                             line_numbers.append(line_no)
                             api_keys.append(matched_key)
             if line_numbers and api_keys:
@@ -67,9 +62,9 @@ def main() -> None:
         print("Searching for 'api_key' in files...")
         files_with_api_key = find_api_key_references(root_dir)
         if files_with_api_key:
-            print("\nFiles containing 'api_key':\n-------------------------------")
+            print("\nFiles containing 'api_key':\n---------------------------")
             for file_path, line_numbers, api_keys in files_with_api_key:
-                print(f"{file_path} (lines: {', '.join(map(str, line_numbers))}), API Keys: {', '.join(api_keys)}")
+                print(f"{file_path} (lines: {', '.join(map(str, line_numbers))}), {', '.join(api_keys)}")
         else:
             print("No files found containing 'api_key'.")
     except KeyboardInterrupt:
