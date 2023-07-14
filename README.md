@@ -30,12 +30,12 @@ SCREENSHOT.show()
 ```
 
 ## Bash/Batch
-| Script Name         | Use Function                                     |
-| ------------------- | :----------------------------------------------- |
-| `cleaner.sh `       | generic linux cleanup script                     |
-| `mac_cleaner`       | cleanup script I used on my own Mac              |
-| `update_repo`       | remove old commits from github repo              |
-| `wget-fetch.sh`     | use wget to fetch a complete webpage             |
+| Script Name              | Use Function                                     |
+| ------------------------ | :----------------------------------------------- |
+| `maintenance_script.sh ` | generic linux cleanup script                     |
+| `mac_cleaner`            | cleanup script I used on my own Mac              |
+| `update_repo`            | remove old commits from github repo              |
+| `wget-fetch.sh`          | use wget to fetch a complete webpage             |
 
 ## JS/Misc
 | Script Name         | Use Function                                     |
