@@ -35,6 +35,7 @@ SCREENSHOT.show()
 | ------------------------ | :----------------------------------------------- |
 | `maintenance_script.sh ` | generic linux cleanup script                     |
 | `mac_cleaner`            | cleanup script I used on my own Mac              |
+| `nmap-menu.sh`           | nmap scan menu with basic options                |
 | `update_repo`            | remove old commits from github repo              |
 | `wget-fetch.sh`          | use wget to fetch a complete webpage             |
 
