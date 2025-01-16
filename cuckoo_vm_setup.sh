@@ -45,6 +45,8 @@ log() {
 # Error handler
 error() {
     log "ERROR" "${RED}$*${NC}" >&2
+    log "ERROR" "Line number: ${BASH_LINENO[0]}"
+    log "ERROR" "Command: $BASH_COMMAND"
     exit 1
 }
 
@@ -53,6 +55,12 @@ cleanup() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
         log "ERROR" "Script failed with exit code $exit_code"
+        log "ERROR" "Last command: $BASH_COMMAND"
+        log "ERROR" "Stack trace:"
+        local frame=0
+        while caller $frame; do
+            ((frame++))
+        done
     fi
     exit $exit_code
 }
