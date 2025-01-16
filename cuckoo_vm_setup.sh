@@ -25,7 +25,7 @@ DEBUG=${DEBUG:-0}
 LOG_FILE="/var/log/install_script.log"
 touch "$LOG_FILE" 2>/dev/null || sudo touch "$LOG_FILE"
 chmod 644 "$LOG_FILE" 2>/dev/null || sudo chmod 644 "$LOG_FILE"
-HWE=${HWE:-"-hwe-22.04"} # Default to HWE kernel
+HWE=${HWE:-"-hwe-24.04"} # Default to HWE kernel
 
 # Dependencies array
 DEPENDENCIES=(
@@ -98,12 +98,13 @@ check_dependencies() {
         fi
     done
 
-    if [[ $has_missing -eq 1 ]]; then
-        log "INFO" "Missing dependencies:$missing_list"
+    # Only log if in debug mode
+    if [[ $DEBUG -eq 1 ]]; then
+        log "DEBUG" "Checking dependencies status..."
     fi
 
-    # Instead of using return codes, we set a global variable
     NEED_DEPENDENCIES=$has_missing
+    MISSING_DEPENDENCIES=$missing_list
 }
 
 check_repositories() {
@@ -135,27 +136,21 @@ check_kvm_support() {
 
 # Install system dependencies
 install_dependencies() {
-    log "INFO" "${YELLOW}Installing system dependencies...${NC}"
+    # First try to install without error trapping to see what's failing
+    log "INFO" "Installing missing packages:$MISSING_DEPENDENCIES"
 
-    # Debug: Show what's in DEPENDENCIES array
-    log "DEBUG" "Dependencies to install: ${DEPENDENCIES[*]}"
+    # Update package list first
+    apt-get update
 
-    # Update package list and upgrade system
-    log "INFO" "Updating package list..."
-    apt-get update || error "Failed to update package list"
+    # Try installing packages one by one to identify problematic packages
+    for dep in "${DEPENDENCIES[@]}"; do
+        log "INFO" "Installing $dep..."
+        if ! apt-get install -y --no-install-recommends "$dep"; then
+            error "Failed to install package: $dep"
+        fi
+    done
 
-    log "INFO" "Upgrading system packages..."
-    apt-get upgrade -y || error "Failed to upgrade system packages"
-
-    # Install all dependencies in a single command
-    log "INFO" "Installing dependencies..."
-    apt-get install -y --no-install-recommends "${DEPENDENCIES[@]}" || {
-        local status=$?
-        log "ERROR" "apt-get install failed with status $status"
-        error "Failed to install dependencies"
-    }
-
-    log "INFO" "${GREEN}All dependencies installed successfully.${NC}"
+    log "INFO" "Package installation completed successfully."
 }
 
 # Configure XRDP with here-doc
