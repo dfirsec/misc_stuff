@@ -121,11 +121,11 @@ check_root() {
 
 # Check if reboot is required
 check_reboot_required() {
-    [[ -f /var/run/reboot-required ]] && {
-        log "WARN" "${YELLOW}A reboot is required to proceed with the installation.${NC}"
+    if [[ -f /var/run/reboot-required ]]; then
+        log "WARN" "A reboot is required to proceed with the installation."
         log "INFO" "Please reboot and re-run this script to continue."
-        exit 1
-    }
+        prompt_reboot
+    fi
 }
 
 # Check KVM support
