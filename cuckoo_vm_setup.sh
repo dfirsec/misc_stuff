@@ -1,34 +1,18 @@
 #!/bin/bash
 
-# Cuckoo Sandbox VM setup script for Ubuntu 22.04 LTS
-# Tested on Ubuntu 22.04 LTS with HWE kernel
-# This script installs all dependencies and configures XRDP for Cuckoo Sandbox VM
-
-# The following commands can be used to create a VM for Cuckoo Sandbox:
-# Set-VMProcessor -VMName "Cuckoo" -ExposeVirtualizationExtensions $true
-# Set-VMFirmware -VMName "Cuckoo" -EnableSecureBoot Off
-# Set-VM -VMName "Cuckoo" -ProcessorCount 4
-# Set-VM -VMName "Cuckoo" -SwitchName "External"
-# Set-VM -VMName "Cuckoo" -EnhancedSessionTransportType HvSocket
-
 # Exit on error, undefined variables, and pipe failures
 set -euo pipefail
 
 # Color definitions using printf for better portability
-readonly RED
-readonly GREEN
-readonly YELLOW
-readonly NC
-
-RED=$(printf '\033[31m')
-GREEN=$(printf '\033[32m')
-YELLOW=$(printf '\033[33m')
-NC=$(printf '\033[0m')
+readonly RED=$(printf '\033[31m')
+readonly GREEN=$(printf '\033[32m')
+readonly YELLOW=$(printf '\033[33m')
+readonly NC=$(printf '\033[0m')
 
 # Configuration
 readonly DEBUG=${DEBUG:-0}
 readonly LOG_FILE="/var/log/install_script.log"
-readonly HWE=${HWE:-"-hwe-22.04"} # Default to HWE kernel
+readonly HWE=${HWE:-"-hwe-22.04"}  # Default to HWE kernel
 
 # Dependencies array
 readonly DEPENDENCIES=(
@@ -45,7 +29,7 @@ readonly DEPENDENCIES=(
     genisoimage
     qemu-system-{x86,common}
     qemu-utils
-    linux-{tools,cloud-tools}-virtual"${HWE}"
+    linux-{tools,cloud-tools}-virtual${HWE}
     xrdp
 )
 
@@ -90,22 +74,22 @@ check_reboot_required() {
 
 # Check KVM support
 check_kvm_support() {
-    grep -Eq 'vmx|svm' /proc/cpuinfo ||
+    grep -Eq 'vmx|svm' /proc/cpuinfo || \
         log "WARN" "${YELLOW}CPU does not support hardware virtualization (KVM).${NC}"
 }
 
 # Install system dependencies
 install_dependencies() {
     log "INFO" "${YELLOW}Installing system dependencies...${NC}"
-
+    
     # Update package list and upgrade system
     apt-get update -qq || error "Failed to update package list"
     apt-get upgrade -y -qq || error "Failed to upgrade system packages"
-
+    
     # Install all dependencies in a single command
-    apt-get install -y --no-install-recommends "${DEPENDENCIES[@]}" ||
+    apt-get install -y --no-install-recommends "${DEPENDENCIES[@]}" || \
         error "Failed to install dependencies"
-
+    
     log "INFO" "${GREEN}All dependencies installed successfully.${NC}"
 }
 
@@ -128,7 +112,7 @@ configure_xrdp() {
         /etc/xrdp/xrdp.ini
 
     # Create startubuntu.sh if it doesn't exist
-    [[ -e /etc/xrdp/startubuntu.sh ]] || cat >/etc/xrdp/startubuntu.sh <<'EOF'
+    [[ -e /etc/xrdp/startubuntu.sh ]] || cat > /etc/xrdp/startubuntu.sh << 'EOF'
 #!/bin/sh
 export GNOME_SHELL_SESSION_MODE=ubuntu
 export XDG_CURRENT_DESKTOP=ubuntu:GNOME
@@ -146,11 +130,11 @@ EOF
     sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.config
 
     # Configure kernel modules
-    echo "blacklist vmw_vsock_vmci_transport" >/etc/modprobe.d/blacklist-vmw_vsock_vmci_transport.conf
-    echo "hv_sock" >/etc/modules-load.d/hv_sock.conf
+    echo "blacklist vmw_vsock_vmci_transport" > /etc/modprobe.d/blacklist-vmw_vsock_vmci_transport.conf
+    echo "hv_sock" > /etc/modules-load.d/hv_sock.conf
 
     # Configure PolicyKit
-    cat >/etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla <<'EOF'
+    cat > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla << 'EOF'
 [Allow Colord all Users]
 Identity=unix-user:*
 Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
@@ -169,14 +153,14 @@ prompt_reboot() {
     echo -e "\n*** A system reboot is required to complete the installation ***"
     read -r -t 30 -p "Would you like to reboot now? (y/N, defaults to N in 30s): " answer || true
     case "${answer:-n}" in
-    [Yy]*)
-        log "INFO" "Rebooting system..."
-        reboot
-        ;;
-    *)
-        log "INFO" "Installation complete. Please reboot your system later to finalize changes."
-        exit 0
-        ;;
+        [Yy]*)
+            log "INFO" "Rebooting system..."
+            reboot
+            ;;
+        *)
+            log "INFO" "Installation complete. Please reboot your system later to finalize changes."
+            exit 0
+            ;;
     esac
 }
 
