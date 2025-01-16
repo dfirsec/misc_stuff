@@ -25,14 +25,21 @@ readonly DEPENDENCIES=(
     python3-venv
     libjpeg8-dev
     zlib1g-dev
-    libhyperscan{5,-dev}
-    {unzip,p7zip-full,rar,unace-nonfree,cabextract}
+    libhyperscan5
+    libhyperscan-dev
+    unzip
+    p7zip-full
+    rar
+    unace-nonfree
+    cabextract
     yara
     tcpdump
     genisoimage
-    qemu-system-{x86,common}
+    qemu-system-x86
+    qemu-system-common
     qemu-utils
-    linux-{tools,cloud-tools}-virtual${HWE}
+    linux-tools-virtual${HWE}
+    linux-cloud-tools-virtual${HWE}
     xrdp
 )
 
