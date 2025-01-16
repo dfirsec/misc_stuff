@@ -25,7 +25,7 @@ DEBUG=${DEBUG:-0}
 LOG_FILE="/var/log/install_script.log"
 touch "$LOG_FILE" 2>/dev/null || sudo touch "$LOG_FILE"
 chmod 644 "$LOG_FILE" 2>/dev/null || sudo chmod 644 "$LOG_FILE"
-HWE=${HWE:-"-hwe-22.04"}  # Default to HWE kernel
+HWE=${HWE:-"-hwe-22.04"} # Default to HWE kernel
 
 # Dependencies array
 DEPENDENCIES=(
@@ -59,7 +59,10 @@ log() {
     shift
     local message="$*"
     echo -e "[$(date -Iseconds)] [${level}] ${message}" | tee -a "$LOG_FILE"
-    [[ $DEBUG -eq 1 && $level == "DEBUG" ]] && echo "[DEBUG] $message" >&2
+    if [[ $DEBUG -eq 1 ]] && [[ $level == "DEBUG" ]]; then
+        echo "[DEBUG] $message" >&2
+    fi
+    return 0
 }
 
 # Error handler
@@ -85,22 +88,26 @@ cleanup() {
 }
 
 check_dependencies() {
-    local missing_deps=()
+    local has_missing=0
+    local missing_list=""
+
     for dep in "${DEPENDENCIES[@]}"; do
         if ! dpkg -l | grep -q "^ii.*$dep"; then
-            missing_deps+=("$dep")
+            has_missing=1
+            missing_list="$missing_list $dep"
         fi
     done
 
-    if [[ ${#missing_deps[@]} -gt 0 ]]; then
-        log "INFO" "Missing dependencies: ${missing_deps[*]}"
-        return 1
+    if [[ $has_missing -eq 1 ]]; then
+        log "INFO" "Missing dependencies:$missing_list"
     fi
-    return 0
+
+    # Instead of using return codes, we set a global variable
+    NEED_DEPENDENCIES=$has_missing
 }
 
 check_repositories() {
-    if ! apt-get update &> /dev/null; then
+    if ! apt-get update &>/dev/null; then
         log "ERROR" "Failed to update package repositories"
         return 1
     fi
@@ -122,7 +129,7 @@ check_reboot_required() {
 
 # Check KVM support
 check_kvm_support() {
-    grep -Eq 'vmx|svm' /proc/cpuinfo || \
+    grep -Eq 'vmx|svm' /proc/cpuinfo ||
         log "WARN" "${YELLOW}CPU does not support hardware virtualization (KVM).${NC}"
 }
 
@@ -170,7 +177,7 @@ configure_xrdp() {
         /etc/xrdp/xrdp.ini
 
     # Create startubuntu.sh if it doesn't exist
-    [[ -e /etc/xrdp/startubuntu.sh ]] || cat > /etc/xrdp/startubuntu.sh << 'EOF'
+    [[ -e /etc/xrdp/startubuntu.sh ]] || cat >/etc/xrdp/startubuntu.sh <<'EOF'
 #!/bin/sh
 export GNOME_SHELL_SESSION_MODE=ubuntu
 export XDG_CURRENT_DESKTOP=ubuntu:GNOME
@@ -188,11 +195,11 @@ EOF
     sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.config
 
     # Configure kernel modules
-    echo "blacklist vmw_vsock_vmci_transport" > /etc/modprobe.d/blacklist-vmw_vsock_vmci_transport.conf
-    echo "hv_sock" > /etc/modules-load.d/hv_sock.conf
+    echo "blacklist vmw_vsock_vmci_transport" >/etc/modprobe.d/blacklist-vmw_vsock_vmci_transport.conf
+    echo "hv_sock" >/etc/modules-load.d/hv_sock.conf
 
     # Configure PolicyKit
-    cat > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla << 'EOF'
+    cat >/etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla <<'EOF'
 [Allow Colord all Users]
 Identity=unix-user:*
 Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
@@ -211,19 +218,22 @@ prompt_reboot() {
     echo -e "\n*** A system reboot is required to complete the installation ***"
     read -r -t 30 -p "Would you like to reboot now? (y/N, defaults to N in 30s): " answer || true
     case "${answer:-n}" in
-        [Yy]*)
-            log "INFO" "Rebooting system..."
-            reboot
-            ;;
-        *)
-            log "INFO" "Installation complete. Please reboot your system later to finalize changes."
-            exit 0
-            ;;
+    [Yy]*)
+        log "INFO" "Rebooting system..."
+        reboot
+        ;;
+    *)
+        log "INFO" "Installation complete. Please reboot your system later to finalize changes."
+        exit 0
+        ;;
     esac
 }
 
 main() {
     log "INFO" "${YELLOW}Starting combined installation script...${NC}"
+
+    # Initialize global variable
+    NEED_DEPENDENCIES=0
 
     # Check root access first
     check_root || error "Root check failed"
@@ -236,7 +246,7 @@ main() {
 
     # Check initial dependencies
     check_dependencies
-    if [[ $? -eq 1 ]]; then
+    if [[ $NEED_DEPENDENCIES -eq 1 ]]; then
         log "INFO" "Installing missing dependencies..."
         install_dependencies || error "Failed to install dependencies"
     fi
