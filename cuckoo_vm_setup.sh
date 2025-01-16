@@ -3,6 +3,9 @@
 # Exit on error, undefined variables, and pipe failures
 set -euo pipefail
 
+# Enable debug mode
+set -x
+
 # Color definitions using printf for better portability
 readonly RED=$(printf '\033[31m')
 readonly GREEN=$(printf '\033[32m')
@@ -90,13 +93,23 @@ check_kvm_support() {
 install_dependencies() {
     log "INFO" "${YELLOW}Installing system dependencies...${NC}"
     
+    # Debug: Show what's in DEPENDENCIES array
+    log "DEBUG" "Dependencies to install: ${DEPENDENCIES[*]}"
+    
     # Update package list and upgrade system
-    apt-get update -qq || error "Failed to update package list"
-    apt-get upgrade -y -qq || error "Failed to upgrade system packages"
+    log "INFO" "Updating package list..."
+    apt-get update || error "Failed to update package list"
+    
+    log "INFO" "Upgrading system packages..."
+    apt-get upgrade -y || error "Failed to upgrade system packages"
     
     # Install all dependencies in a single command
-    apt-get install -y --no-install-recommends "${DEPENDENCIES[@]}" || \
+    log "INFO" "Installing dependencies..."
+    apt-get install -y --no-install-recommends "${DEPENDENCIES[@]}" || {
+        local status=$?
+        log "ERROR" "apt-get install failed with status $status"
         error "Failed to install dependencies"
+    }
     
     log "INFO" "${GREEN}All dependencies installed successfully.${NC}"
 }
