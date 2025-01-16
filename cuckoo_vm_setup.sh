@@ -6,6 +6,17 @@ set -euo pipefail
 # Enable debug mode
 set -x
 
+# Cuckoo Sandbox VM setup script for Ubuntu 22.04 LTS
+# Tested on Ubuntu 22.04 LTS with HWE kernel
+# This script installs all dependencies and configures XRDP for Cuckoo Sandbox VM
+
+# The following commands can be used to create a VM for Cuckoo Sandbox:
+# Set-VMProcessor -VMName "Cuckoo" -ExposeVirtualizationExtensions $true
+# Set-VMFirmware -VMName "Cuckoo" -EnableSecureBoot Off
+# Set-VM -VMName "Cuckoo" -ProcessorCount 4
+# Set-VM -VMName "Cuckoo" -SwitchName "External"
+# Set-VM -VMName "Cuckoo" -EnhancedSessionTransportType HvSocket
+
 # Color definitions using printf for better portability
 RED=$(printf '\033[31m')
 GREEN=$(printf '\033[32m')
@@ -38,8 +49,8 @@ DEPENDENCIES=(
     qemu-system-x86
     qemu-system-common
     qemu-utils
-    linux-tools-virtual${HWE}
-    linux-cloud-tools-virtual${HWE}
+    linux-tools-virtual"${HWE}"
+    linux-cloud-tools-virtual"${HWE}"
     xrdp
 )
 
@@ -99,17 +110,17 @@ check_kvm_support() {
 # Install system dependencies
 install_dependencies() {
     log "INFO" "${YELLOW}Installing system dependencies...${NC}"
-    
+
     # Debug: Show what's in DEPENDENCIES array
     log "DEBUG" "Dependencies to install: ${DEPENDENCIES[*]}"
-    
+
     # Update package list and upgrade system
     log "INFO" "Updating package list..."
     apt-get update || error "Failed to update package list"
-    
+
     log "INFO" "Upgrading system packages..."
     apt-get upgrade -y || error "Failed to upgrade system packages"
-    
+
     # Install all dependencies in a single command
     log "INFO" "Installing dependencies..."
     apt-get install -y --no-install-recommends "${DEPENDENCIES[@]}" || {
@@ -117,7 +128,7 @@ install_dependencies() {
         log "ERROR" "apt-get install failed with status $status"
         error "Failed to install dependencies"
     }
-    
+
     log "INFO" "${GREEN}All dependencies installed successfully.${NC}"
 }
 
