@@ -14,7 +14,7 @@ set -euo pipefail
 # Set-VM -VMName "Cuckoo" -SwitchName "External"
 # Set-VM -VMName "Cuckoo" -EnhancedSessionTransportType HvSocket
 
-# Color definitions using printf for better portability
+# Color definitions
 RED=$(printf '\033[31m')
 GREEN=$(printf '\033[32m')
 YELLOW=$(printf '\033[33m')
@@ -27,7 +27,7 @@ touch "$LOG_FILE" 2>/dev/null || sudo touch "$LOG_FILE"
 chmod 644 "$LOG_FILE" 2>/dev/null || sudo chmod 644 "$LOG_FILE"
 HWE=${HWE:-"-hwe-24.04"} # Default to HWE kernel
 
-# Dependencies array
+# Dependencies
 DEPENDENCIES=(
     aptitude
     python3-dev
@@ -73,6 +73,7 @@ error() {
     exit 1
 }
 
+# Cleanup function to log errors and exit
 cleanup() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
@@ -87,6 +88,7 @@ cleanup() {
     exit $exit_code
 }
 
+# Check if dependencies are installed
 check_dependencies() {
     local has_missing=0
     local missing_list=""
@@ -107,6 +109,7 @@ check_dependencies() {
     MISSING_DEPENDENCIES=$missing_list
 }
 
+# Check if repositories are accessible
 check_repositories() {
     if ! apt-get update &>/dev/null; then
         log "ERROR" "Failed to update package repositories"
@@ -115,6 +118,7 @@ check_repositories() {
     return 0
 }
 
+# Check if script is run as root
 check_root() {
     [[ $(id -u) -eq 0 ]] || error "This script must be run as root or with sudo privileges."
 }
