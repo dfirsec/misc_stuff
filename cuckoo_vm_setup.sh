@@ -7,18 +7,18 @@ set -euo pipefail
 set -x
 
 # Color definitions using printf for better portability
-readonly RED=$(printf '\033[31m')
-readonly GREEN=$(printf '\033[32m')
-readonly YELLOW=$(printf '\033[33m')
-readonly NC=$(printf '\033[0m')
+RED=$(printf '\033[31m')
+GREEN=$(printf '\033[32m')
+YELLOW=$(printf '\033[33m')
+NC=$(printf '\033[0m')
 
 # Configuration
-readonly DEBUG=${DEBUG:-0}
-readonly LOG_FILE="/var/log/install_script.log"
-readonly HWE=${HWE:-"-hwe-22.04"}  # Default to HWE kernel
+DEBUG=${DEBUG:-0}
+LOG_FILE="/var/log/install_script.log"
+HWE=${HWE:-"-hwe-22.04"}  # Default to HWE kernel
 
 # Dependencies array
-readonly DEPENDENCIES=(
+DEPENDENCIES=(
     aptitude
     python3-dev
     python3-pip
