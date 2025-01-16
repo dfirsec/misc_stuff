@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Exit on error, undefined variables, and pipe failures
+trap cleanup EXIT
 set -euo pipefail
-
-# Enable debug mode
-set -x
 
 # Cuckoo Sandbox VM setup script for Ubuntu 22.04 LTS
 # Tested on Ubuntu 22.04 LTS with HWE kernel
@@ -26,6 +23,8 @@ NC=$(printf '\033[0m')
 # Configuration
 DEBUG=${DEBUG:-0}
 LOG_FILE="/var/log/install_script.log"
+touch "$LOG_FILE" 2>/dev/null || sudo touch "$LOG_FILE"
+chmod 644 "$LOG_FILE" 2>/dev/null || sudo chmod 644 "$LOG_FILE"
 HWE=${HWE:-"-hwe-22.04"}  # Default to HWE kernel
 
 # Dependencies array
@@ -71,23 +70,43 @@ error() {
     exit 1
 }
 
-# Trap errors and cleanup
 cleanup() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
-        log "ERROR" "Script failed with exit code $exit_code"
-        log "ERROR" "Last command: $BASH_COMMAND"
-        log "ERROR" "Stack trace:"
+        echo "Script failed with exit code $exit_code" | tee -a "$LOG_FILE"
+        echo "Last command: $BASH_COMMAND" | tee -a "$LOG_FILE"
+        echo "Stack trace:" | tee -a "$LOG_FILE"
         local frame=0
         while caller $frame; do
             ((frame++))
-        done
+        done | tee -a "$LOG_FILE"
     fi
     exit $exit_code
 }
-trap cleanup EXIT
 
-# Check for root privileges
+check_dependencies() {
+    local missing_deps=()
+    for dep in "${DEPENDENCIES[@]}"; do
+        if ! dpkg -l | grep -q "^ii.*$dep"; then
+            missing_deps+=("$dep")
+        fi
+    done
+
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        log "INFO" "Missing dependencies: ${missing_deps[*]}"
+        return 1
+    fi
+    return 0
+}
+
+check_repositories() {
+    if ! apt-get update &> /dev/null; then
+        log "ERROR" "Failed to update package repositories"
+        return 1
+    fi
+    return 0
+}
+
 check_root() {
     [[ $(id -u) -eq 0 ]] || error "This script must be run as root or with sudo privileges."
 }
@@ -205,11 +224,29 @@ prompt_reboot() {
 
 main() {
     log "INFO" "${YELLOW}Starting combined installation script...${NC}"
-    check_root
+
+    # Check root access first
+    check_root || error "Root check failed"
+
+    # Check repositories before proceeding
+    check_repositories || error "Repository check failed"
+
+    # Check KVM support (non-critical)
     check_kvm_support
-    install_dependencies
-    configure_xrdp
+
+    # Check initial dependencies
+    check_dependencies
+    if [[ $? -eq 1 ]]; then
+        log "INFO" "Installing missing dependencies..."
+        install_dependencies || error "Failed to install dependencies"
+    fi
+
+    # Configure XRDP
+    configure_xrdp || error "Failed to configure XRDP"
+
+    # Check if reboot is required
     check_reboot_required
+
     log "INFO" "${GREEN}Installation and configuration completed successfully.${NC}"
     prompt_reboot
 }
